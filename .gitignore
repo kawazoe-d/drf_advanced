@@ -4,7 +4,7 @@ __pycache__/
 db.sqlite3
 .idea/
 .dbdata/
-.dbadmin4_data/
+.pgadmin4_data/
 
 # pyenv 
 .python-version 
