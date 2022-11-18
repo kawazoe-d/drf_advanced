@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from .serializers import UserSerializer
+from .authentication import JWTAuthentication
 from core.models import User
 
 class RegisterAPIView(APIView):
@@ -55,4 +56,15 @@ class LoginAPIView(APIView):
         if not user.check_password(password):
             raise exceptions.AuthenticationFailed('Incorrect Password!')
 
-        return Response(UserSerializer(user).data)
+        jwt_authentication = JWTAuthentication()
+
+        token = jwt_authentication.generate_jwt(user.id)
+
+        response = Response()
+        # jwtトークンをCookieにセット。httponly=Trueでhttp通信でのみ参照可となる
+        response.set_cookie(key='jwt', value=token, httponly=True)
+        response.data = {
+            'meddage': 'success'
+        }
+
+        return response
