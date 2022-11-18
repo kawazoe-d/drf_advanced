@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import exceptions, status
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 # returnで返すResponseオブジェクト
 from rest_framework.response import Response
 
@@ -95,3 +96,26 @@ class LoginAPIView(APIView):
         }
 
         return response
+
+class UserAPIView(APIView):
+    """
+    ログインユーザーAPIクラス
+    request
+    Cookie
+    response
+    {
+        "id": 1,
+        "first_name": "test",
+        "last_name": "test",
+        "email": "test@t.com",
+        "is_ambassador": true
+    }
+    """
+    # 指定したAuthenticationクラスを使って認証を行う
+    authentication_classes = [JWTAuthentication]
+    # 認証済みでないとerrorを返す
+    # "detail": "You do not have permission to perform this action."
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(UserSerializer(request.user).data)
