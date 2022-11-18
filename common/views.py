@@ -9,7 +9,25 @@ from .authentication import JWTAuthentication
 from core.models import User
 
 class RegisterAPIView(APIView):
-    """ユーザーモデルの登録APIクラス"""
+    """
+    ユーザーモデルの登録APIクラス
+    request
+    {
+        "first_name": "test",
+        "last_name": "test",
+        "email": "test@t.com",
+        "password": "test",
+        "password_confirm": "test"
+    }
+    response
+    {
+        "id": 1,
+        "first_name": "test",
+        "last_name": "test",
+        "email": "test@t.com",
+        "is_ambassador": true
+    }
+    """
     def post(self, request):
         """ユーザーモデルの登録APIに対応するハンドラメソッド"""
 
@@ -35,7 +53,18 @@ class RegisterAPIView(APIView):
         return Response(serializer.data, status.HTTP_201_CREATED)
 
 class LoginAPIView(APIView):
-    """ログイン認証APIクラス"""
+    """
+    ログイン認証APIクラス
+    request
+    {
+        "email": "test@t.com",
+        "password": "test"
+    }
+    response
+    {
+        "message": "success"
+    }
+    """
     def post(self, request):
         email = request.data['email']
         password = request.data['password']
@@ -56,15 +85,13 @@ class LoginAPIView(APIView):
         if not user.check_password(password):
             raise exceptions.AuthenticationFailed('Incorrect Password!')
 
-        jwt_authentication = JWTAuthentication()
-
-        token = jwt_authentication.generate_jwt(user.id)
+        token = JWTAuthentication.generate_jwt(user.id)
 
         response = Response()
         # jwtトークンをCookieにセット。httponly=Trueでhttp通信でのみ参照可となる
         response.set_cookie(key='jwt', value=token, httponly=True)
         response.data = {
-            'meddage': 'success'
+            'message': 'success'
         }
 
         return response
