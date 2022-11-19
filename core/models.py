@@ -64,3 +64,31 @@ class Link(models.Model):
     products = models.ManyToManyField(Product)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+class Order(models.Model):
+    transacrion_id = models.TextField(null=True)
+    # SET_NULL:オブジェクトが削除されると、代わりにNULLをセット
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    code = models.TextField()
+    ambassador_email = models.TextField()
+    first_name = models.TextField()
+    last_name = models.TextField()
+    email = models.TextField()
+    address = models.TextField(null=True)
+    city = models.TextField(null=True)
+    country = models.TextField(null=True)
+    zip = models.TextField(null=True)
+    complete = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class OrderItem(models.Model):
+    # related_name:逆参照するときの名前を指定
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
+    product_title = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.IntegerField()
+    admin_revenue = models.DecimalField(max_digits=10, decimal_places=2)
+    ambassador_revenue = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

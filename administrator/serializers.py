@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from core.models import Product, Link
+from core.models import Product, Link, Order, OrderItem
 
 # ModelSerializerを継承することでモデルのフィールド定義を再利用可
 class ProductSerializer(serializers.ModelSerializer):
@@ -13,4 +13,26 @@ class ProductSerializer(serializers.ModelSerializer):
 class LinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Link
+        fields = '__all__'
+
+class OrderItremSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = '__all__'
+
+class OrderSerializer(serializers.ModelSerializer):
+    order_items = OrderItremSerializer(many=True)
+    # SerializerMethodField()を使うことにより、メソッドの結果によってフィールドの値を決めることが可能
+    # 適用されるメソッド名はget_ + フィールド名
+    # 適用されるメソッド名をSerializerMethodField()のmethod_nameという引数で指定することも可能
+    total = serializers.SerializerMethodField('get_total')
+
+    def get_total(self, obj):
+        items = OrderItem.objects.filter(order_id=obj.id)
+        # for文を一行で書くときの構文
+        # x for {変数} in {イテラブル}
+        return sum((o.price * o.quantity) for o in items)
+
+    class Meta:
+        model = Order
         fields = '__all__'
