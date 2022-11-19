@@ -3,7 +3,9 @@ from django.db import connections
 from django.db.utils import OperationalError
 import time
 
+# カスタムコマンドはBaseCommandを継承したCommandクラスで定義する
 class Command(BaseCommand):
+    # 継承したhandleメソッド内に実行したい処理を書く
     def handle(self, *args, **options):
         # 標準出力に上書きして表示する
         self.stdout.write('Waiting for the database...')

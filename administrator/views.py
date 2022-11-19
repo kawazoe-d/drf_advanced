@@ -1,8 +1,12 @@
+from rest_framework import generics, mixins
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
+from .serializers import ProductSerializer
 from common.serializers import UserSerializer
-from core.models import User
+from common.authentication import JWTAuthentication
+from core.models import User, Product
 
 class AmbassadorAPIView(APIView):
     """
@@ -25,8 +29,41 @@ class AmbassadorAPIView(APIView):
         }
     ]
     """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, _):
         ambassadors = User.objects.filter(is_ambassador=True)
         # リスト形式のjsonを出力する場合は、キーワード引数にmany=Trueを指定する
         serializer = UserSerializer(ambassadors, many=True)
         return Response(serializer.data)
+
+# Generic = 汎用
+# RetrieveModelMixin 単体取得Mixin
+# ListModelMixin 一覧取得Mixin
+class ProductGenericAPIView(
+    generics.GenericAPIView, mixins.RetrieveModelMixin, mixins.ListModelMixin, 
+    mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin
+):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    # querysetは、モデルから取り出した一連の情報。Djangoが作っているQueryset型のデータ
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+    def get(self, request, pk=None):
+        # pkがある場合、単体で取得
+        if pk:
+            return self.retrieve(request, pk)
+
+        # pkがない場合、一覧で取得
+        return self.list(request)
+
+    def post(self, request):
+        return self.create(request)
+    
+    def put(self, request, pk=None):
+        return self.partial_update(request, pk)
+    
+    def delete(self, request, pk=None):
+        return self.destroy(request, pk)

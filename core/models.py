@@ -48,3 +48,12 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     object = UserManager()
+
+class Product(models.Model):
+    title = models.TextField()
+    description = models.TextField(null=True)
+    image = models.TextField()
+    # DecimalField:固定小数点
+    # max_digits 数字部分の最大桁数
+    # decimal_places 小数部分の桁数
+    price = models.DecimalField(max_digits=10, decimal_places=2)
