@@ -47,8 +47,12 @@ class RegisterAPIView(APIView):
         # 引数dataにリクエストdataを渡してシリアライザをインスタンス化
         serializer = UserSerializer(data=data)
         # バリデーションを実行
+        # is_validを実行しないとsaveメソッドは呼び出せない
+        # raise_exception=True を与えることで erorrs 情報をラップした ValidationError を投げてくれる
         serializer.is_valid(raise_exception=True)
         # モデルオブジェクトを登録
+        # data (出力専用)属性を参照した後には save() はコールできない
+        # どうしても参照する必要があるなら、 validated_dataを使う
         serializer.save()
         # シリアライザオブジェクトのdata属性にdictで格納されたデータをJSON文字列にシリアライズ
         return Response(serializer.data, status.HTTP_201_CREATED)
@@ -141,3 +145,65 @@ class LogoutAPIView(APIView):
             'message': 'success'
         }
         return response
+
+class ProfileInfoAPIView(APIView):
+    """
+    ユーザー情報更新APIクラス
+    request
+    {
+        "first_name": "new",
+        "last_name": "new",
+        "email": "new@new.com"
+    }
+    response
+    {
+        "id": 1,
+        "first_name": "new",
+        "last_name": "new",
+        "email": "new@new.com",
+        "is_ambassador": true
+    }
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, pk=None):
+        user = request.user
+        # partial 引数がTrueの場合、第二引数(data)ですべての値を指定しなくても、第一引数のオブジェクトから補完される
+        # 引数dataで渡した値のみが更新される
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+class ProfilePasswordAPIView(APIView):
+    """
+    パスワード更新APIクラス
+    request
+    {
+        "password": "new",
+        "password_confirm": "new"
+    } 
+    response
+    {
+        "id": 1,
+        "first_name": "new",
+        "last_name": "new",
+        "email": "new@new.com",
+        "is_ambassador": true
+    }
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, pk=None):
+        user = request.user
+        data = request.data
+
+        if data['password'] != data['password_confirm']:
+            raise exceptions.APIException('Passwords do not match!')
+        
+        user.set_password(data['password'])
+        user.save()
+
+        return Response(UserSerializer(user).data)
