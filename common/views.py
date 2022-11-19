@@ -119,3 +119,25 @@ class UserAPIView(APIView):
 
     def get(self, request):
         return Response(UserSerializer(request.user).data)
+
+class LogoutAPIView(APIView):
+    """
+    ログアウトAPIクラス
+    request
+    Cookie
+    response
+    {
+        "message": "success"
+    }
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    # request引数は使用しないことを明示
+    def post(self, _):
+        response = Response()
+        response.delete_cookie(key='jwt')
+        response.data = {
+            'message': 'success'
+        }
+        return response
