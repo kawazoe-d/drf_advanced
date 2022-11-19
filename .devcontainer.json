@@ -2,5 +2,10 @@
   "dockerComposeFile": "docker-compose.yaml",
   "service": "backend",
   "workspaceFolder": "/config",
-  "extensions": []
+  "extensions": [
+    "ms-python.python",
+    "batisteo.vscode-django",
+    "oderwat.indent-rainbow",
+    "mosapride.zenkaku"
+  ]
 }
