@@ -3,10 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import ProductSerializer
+from .serializers import ProductSerializer, LinkSerializer
 from common.serializers import UserSerializer
 from common.authentication import JWTAuthentication
-from core.models import User, Product
+from core.models import User, Product, Link
 
 class AmbassadorAPIView(APIView):
     """
@@ -67,3 +67,12 @@ class ProductGenericAPIView(
     
     def delete(self, request, pk=None):
         return self.destroy(request, pk)
+
+class LinkAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk=None):
+        links = Link.objects.filter(user_id=pk)
+        serilaizer = LinkSerializer(links, many=True)
+        return Response(serilaizer.data)
