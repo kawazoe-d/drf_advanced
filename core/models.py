@@ -49,6 +49,17 @@ class User(AbstractUser):
 
     object = UserManager()
 
+    # getter
+    @property
+    def name(self):
+        return self.first_name + ' ' + self.last_name
+
+    @property
+    def revenue(self):
+        # このUserに紐づいた、completeのOrderを参照する
+        orders = Order.objects.filter(user_id=self.pk, complete=True)
+        return sum(o.ambassador_revenue for o in orders)
+
 class Product(models.Model):
     title = models.TextField()
     description = models.TextField(null=True)
@@ -81,6 +92,16 @@ class Order(models.Model):
     complete = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def name(self):
+        return self.first_name + ' ' + self.last_name
+
+    @property
+    def ambassador_revenue(self):
+        items = OrderItem.objects.filter(order_id=self.pk)
+        return sum(i.ambassador_revenue for i in items)
+
 
 class OrderItem(models.Model):
     # related_name:逆参照するときの名前を指定
