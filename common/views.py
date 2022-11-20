@@ -42,7 +42,10 @@ class RegisterAPIView(APIView):
             「サーバエラーが発生しました」というレスポンスデータを返す
             """
             raise exceptions.APIException('Passwords do not match!')
-        data['is_ambassedor'] = 0
+
+        # request.path:現在のURLのパラメータなしパスを取得する
+        # request.pathをつかってambassasdorかどうか確認する
+        data['is_ambassedor'] = 'api/ambassador' in request.path
         
         # 引数dataにリクエストdataを渡してシリアライザをインスタンス化
         serializer = UserSerializer(data=data)
@@ -90,7 +93,14 @@ class LoginAPIView(APIView):
         if not user.check_password(password):
             raise exceptions.AuthenticationFailed('Incorrect Password!')
 
-        token = JWTAuthentication.generate_jwt(user.id)
+        # request.pathによってscopeの値を変える
+        scope = 'ambassador' if 'api/ambassador' in request.path else 'admin'
+
+        # ambassadorがadminでログインした場合、エラーを返す
+        if user.is_ambassador and scope == 'admin':
+            raise exceptions.AuthenticationFailed('Unauthorized')
+
+        token = JWTAuthentication.generate_jwt(user.id, scope)
 
         response = Response()
         # jwtトークンをCookieにセット。httponly=Trueでhttp通信でのみ参照可となる
