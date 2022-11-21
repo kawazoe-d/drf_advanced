@@ -19,12 +19,29 @@ class ProductFrontendAPI(APIView):
 
 class ProductBackendAPIView(APIView):
 
-    def get(self, _):
-        products = cache.ger('products_backend')
-
+    def get(self, request):
+        products = cache.get('products_backend')
         if not products:
             time.sleep(2)
             products = list(Product.objects.all())
             cache.set('products_backend', products, timeout=60 * 30) # 30 min
+
+        # 引数はクエリパラメータのkeyとdefault
+        s = request.query_params.get('s', '')
+        if s:
+            products = list([
+                # リスト内包表記 [式 for 任意の変数名 in イテラブルオブジェクト]
+                # リスト内包表記とif文の組合せ
+                # some_var = [expression for item in iterable_obj if condition]
+                # 「if condition」に記述した条件（condition）が真になるかどうかをテストして、
+                # その結果が真の場合にのみ、「expression」が評価されて、その結果が新たなリストの要素となる
+
+                # この場合、クエリパラメータを小文字に変換したものと
+                # productsのtitile、descriptionを小文字に変換したものを比較し
+                # マッチしたものをproductsに戻している
+                p for p in products
+                if (s.lower() in p.title.lower()) or (s.lower() in p.description.lower())
+            ])
+
         serializser = ProductSerializer(products, many=True)
         return Response(serializser.data)
