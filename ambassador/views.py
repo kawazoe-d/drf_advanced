@@ -1,13 +1,15 @@
+import time, math, random, string
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from rest_framework.permissions import IsAuthenticated
 
-from .serializer import ProductSerializer
+from .serializer import ProductSerializer, LinkSerializer
 from core.models import Product
+from common.authentication import JWTAuthentication
 from django.core.cache import cache
-import time
-import math
 
 class ProductFrontendAPI(APIView):
 
@@ -79,3 +81,23 @@ class ProductBackendAPIView(APIView):
                 'last_page': math.ceil(total / per_page)
             }
         })
+
+class LinkAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        serializer = LinkSerializer(data={
+            'user': user.id,
+            # random.choices():ランダムに複数の要素を選択（重複あり）
+            # 引数kで取得したい要素の個数を指定。重複が認められているので、取得する要素数kを元のリストの要素数より大きくすることも可能
+            # a~zは「ascii_lowercase」、A～Zは「ascii_uppercase」、数字は「digits」で取得
+            'code': ''.join(random.choices(string.ascii_lowercase + string.digits, k=6)),
+            'products': request.data['products']
+        })
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
