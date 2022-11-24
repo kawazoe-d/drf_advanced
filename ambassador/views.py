@@ -7,6 +7,7 @@ from .serializer import ProductSerializer
 from core.models import Product
 from django.core.cache import cache
 import time
+import math
 
 class ProductFrontendAPI(APIView):
 
@@ -43,6 +44,9 @@ class ProductBackendAPIView(APIView):
                 if (s.lower() in p.title.lower()) or (s.lower() in p.description.lower())
             ])
 
+        # productsの全件数を取得
+        total = len(products)
+
         # 引数はクエリパラメータのkeyとdefault
         sort = request.query_params.get('sort', None)
         if sort == 'asc':
@@ -54,5 +58,24 @@ class ProductBackendAPIView(APIView):
         elif sort == 'desc':
             products.sort(key=lambda p: p.price, reverse=True)
 
-        serializser = ProductSerializer(products, many=True)
-        return Response(serializser.data)
+        # productsの1Pあたりの表示数
+        per_page = 20
+        # 表示ページをクエリパラメータから取得
+        page = int(request.query_params.get('page', 1))
+        # 表示ページの最初のデータ位置
+        start = (page - 1) * per_page
+        # 表示ページの最後のデータ位置
+        end = page * per_page
+
+        # リストのスライス機能 リスト[開始インデックス:終了インデックス]
+        # 指定した範囲にある要素を含む新しいリストを返す
+        data = ProductSerializer(products[start:end], many=True).data
+        return Response({
+            'data': data,
+            'meta': {
+                'total': total,
+                'page': page,
+                # 小数点以下を切り上げ: math.ceil()
+                'last_page': math.ceil(total / per_page)
+            }
+        })
