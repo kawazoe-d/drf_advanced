@@ -7,6 +7,7 @@ from .serializers import ProductSerializer, LinkSerializer, OrderSerializer
 from common.serializers import UserSerializer
 from common.authentication import JWTAuthentication
 from core.models import User, Product, Link, Order
+from django.core.cache import cache
 
 class AmbassadorAPIView(APIView):
     """
@@ -60,13 +61,31 @@ class ProductGenericAPIView(
         return self.list(request)
 
     def post(self, request):
-        return self.create(request)
+        # create:リソースの作成
+        response = self.create(request)
+        for key in cache.keys('*'):
+            if 'products_frontend' in key:
+                cache.delete(key)
+        cache.delete('products_backend')
+        return response
     
     def put(self, request, pk=None):
-        return self.partial_update(request, pk)
+        # partial_update:リソースの更新（一部）
+        response = self.partial_update(request, pk)
+        for key in cache.keys('*'):
+            if 'products_frontend' in key:
+                cache.delete(key)
+        cache.delete('products_backend')
+        return response
     
     def delete(self, request, pk=None):
-        return self.destroy(request, pk)
+        # destroy:リソースの削除
+        response = self.destroy(request, pk)
+        for key in cache.keys('*'):
+            if 'products_frontend' in key:
+                cache.delete(key)
+        cache.delete('products_backend')
+        return response
 
 class LinkAPIView(APIView):
     authentication_classes = [JWTAuthentication]
