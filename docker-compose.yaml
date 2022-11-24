@@ -31,8 +31,9 @@ services:
 
   redis:
     image: redis
+    container_name: redis_test #コマンド時に使用するコンテナ名
     ports:
-      - 6379:6379
+      - 6379:6379 #redisのデフォルトのポートは6379
 
 volumes:
     postgres_data:

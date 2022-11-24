@@ -43,5 +43,16 @@ class ProductBackendAPIView(APIView):
                 if (s.lower() in p.title.lower()) or (s.lower() in p.description.lower())
             ])
 
+        # 引数はクエリパラメータのkeyとdefault
+        sort = request.query_params.get('sort', None)
+        if sort == 'asc':
+            # リスト型のメソッドsort(): 元のリストをソート
+            # 引数keyにラムダ式(無名関数)を用いてソートしたい要素を指定する
+            # lambda p の p は products.sort の products の各要素を表す
+            # この場合は、productsの各要素のpriseでsortするよう指示している
+            products.sort(key=lambda p: p.price)
+        elif sort == 'desc':
+            products.sort(key=lambda p: p.price, reverse=True)
+
         serializser = ProductSerializer(products, many=True)
         return Response(serializser.data)
