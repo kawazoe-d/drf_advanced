@@ -5,9 +5,10 @@ from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework.permissions import IsAuthenticated
+from django_redis import get_redis_connection
 
 from .serializer import ProductSerializer, LinkSerializer
-from core.models import Product, Link, Order
+from core.models import Product, Link, Order, User
 from common.authentication import JWTAuthentication
 from django.core.cache import cache
 
@@ -121,3 +122,18 @@ class StatsAPIView(APIView):
             'count': len(orders),
             'revenue': sum(o.ambassador_revenue for o in orders)
         }
+
+class RankingsAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        con = get_redis_connection('default')
+
+        # zrevrangebyscore:maxスコアがmax と minの間のkeyにあるsorted score内の全ての要素を返す
+        rankings = con.zrevrangebyscore('rankings', min=0, max=10000, withscores=True)
+
+        # 辞書内包表記 d = {k: k ** 2 for k in range(5)}
+        return Response({
+            r[0].decode("utf-8"): r[1] for r in rankings
+        })
